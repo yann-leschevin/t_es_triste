@@ -1,0 +1,166 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    color-scheme: dark;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    color: #f8fafc;
+    background:
+        radial-gradient(circle at top, #26345c 0, #111827 45%, #080c16 100%);
+}
+
+.game {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.board-container {
+    position: relative;
+    border: 4px solid #64748b;
+    border-radius: 8px;
+    overflow: hidden;
+    line-height: 0;
+    background: #080c16;
+    box-shadow: 0 18px 45px #0009;
+}
+
+#board {
+    display: block;
+    width: 300px;
+    height: 600px;
+}
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 25px;
+    line-height: normal;
+    text-align: center;
+    background: #020617d9;
+}
+
+.overlay h2 {
+    margin: 0 0 10px;
+    font-size: 2rem;
+    color: #facc15;
+}
+
+.overlay p {
+    margin: 0;
+}
+
+.hidden {
+    display: none;
+}
+
+.sidebar {
+    width: 230px;
+}
+
+.sidebar > h1 {
+    margin: 0 0 16px;
+    font-size: 2.5rem;
+    letter-spacing: 6px;
+    color: #38bdf8;
+    text-shadow: 0 3px #075985;
+}
+
+.panel {
+    margin-bottom: 14px;
+    padding: 14px;
+    border: 1px solid #475569;
+    border-radius: 10px;
+    background: #111827dd;
+    box-shadow: 0 8px 20px #0004;
+}
+
+.panel h2 {
+    margin: 0 0 12px;
+    font-size: 1rem;
+    color: #cbd5e1;
+}
+
+#next {
+    display: block;
+    margin: auto;
+    background: #080c16;
+    border-radius: 6px;
+}
+
+.stats p {
+    display: flex;
+    justify-content: space-between;
+    margin: 9px 0;
+}
+
+.stats strong {
+    color: #facc15;
+}
+
+.controls {
+    font-size: 0.85rem;
+    color: #cbd5e1;
+}
+
+.controls p {
+    margin: 7px 0;
+}
+
+button {
+    width: 100%;
+    border: 0;
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #082f49;
+    background: #38bdf8;
+}
+
+button:hover {
+    background: #7dd3fc;
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+@media (max-width: 620px) {
+    body {
+        display: block;
+        padding: 12px;
+    }
+
+    .game {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .board-container,
+    #board {
+        width: min(300px, calc(100vw - 24px));
+    }
+
+    #board {
+        height: auto;
+    }
+
+    .sidebar {
+        width: min(300px, calc(100vw - 24px));
+    }
+}

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Tetris Flask</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <main class="game">
+        <section class="board-container">
+            <canvas id="board" width="300" height="600"></canvas>
+
+            <div id="overlay" class="overlay hidden">
+                <h2 id="overlay-title">Pause</h2>
+                <p id="overlay-text">Appuie sur P pour continuer</p>
+            </div>
+        </section>
+
+        <aside class="sidebar">
+            <h1>TETRIS</h1>
+
+            <section class="panel">
+                <h2>Pièce suivante</h2>
+                <canvas id="next" width="120" height="120"></canvas>
+            </section>
+
+            <section class="panel stats">
+                <p>Score <strong id="score">0</strong></p>
+                <p>Lignes <strong id="lines">0</strong></p>
+                <p>Niveau <strong id="level">1</strong></p>
+            </section>
+
+            <section class="panel controls">
+                <h2>Commandes</h2>
+                <p>← → : déplacer</p>
+                <p>↓ : accélérer</p>
+                <p>↑ / X : rotation</p>
+                <p>Z : rotation inverse</p>
+                <p>Espace : chute directe</p>
+                <p>T-Spin : 2 × tetris (1600/niveau)</p>
+                <p>P : pause</p>
+                <p>R : recommencer</p>
+            </section>
+
+            <button id="restart" type="button">Recommencer</button>
+        </aside>
+    </main>
+
+    <script src="{{ url_for('static', filename='tetris.js') }}"></script>
+</body>
+</html>
