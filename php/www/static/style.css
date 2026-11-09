@@ -1,0 +1,267 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    color-scheme: dark;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    padding: 20px;
+    color: #f8fafc;
+    background:
+        radial-gradient(circle at top, #26345c 0, #111827 45%, #080c16 100%);
+}
+
+.game {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.board-container {
+    position: relative;
+    border: 4px solid #64748b;
+    border-radius: 8px;
+    overflow: hidden;
+    line-height: 0;
+    background: #080c16;
+    box-shadow: 0 18px 45px #0009;
+}
+
+#board {
+    display: block;
+    width: 300px;
+    height: 600px;
+}
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 25px;
+    line-height: normal;
+    text-align: center;
+    background: #020617d9;
+}
+
+.overlay h2 {
+    margin: 0 0 10px;
+    font-size: 2rem;
+    color: #facc15;
+}
+
+.overlay p {
+    margin: 0;
+}
+
+.hidden {
+    display: none;
+}
+
+.sidebar {
+    width: 230px;
+}
+
+.game-title {
+    margin: 0 0 18px;
+    text-align: center;
+    font-size: 2.5rem;
+    letter-spacing: 6px;
+    color: #38bdf8;
+    text-shadow: 0 3px #075985;
+}
+
+.panel {
+    margin-bottom: 14px;
+    padding: 14px;
+    border: 1px solid #475569;
+    border-radius: 10px;
+    background: #111827dd;
+    box-shadow: 0 8px 20px #0004;
+}
+
+.panel h2 {
+    margin: 0 0 12px;
+    font-size: 1rem;
+    color: #cbd5e1;
+}
+
+#next {
+    display: block;
+    margin: auto;
+    background: #080c16;
+    border-radius: 6px;
+}
+
+.stats p {
+    display: flex;
+    justify-content: space-between;
+    margin: 9px 0;
+}
+
+.stats strong {
+    color: #facc15;
+}
+
+.controls {
+    font-size: 0.85rem;
+    color: #cbd5e1;
+}
+
+.controls p {
+    margin: 7px 0;
+}
+
+button {
+    width: 100%;
+    border: 0;
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #082f49;
+    background: #38bdf8;
+}
+
+button:hover {
+    background: #7dd3fc;
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+@media (max-width: 620px) {
+    body {
+        display: block;
+        padding: 12px;
+    }
+
+    .game {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .board-container,
+    #board {
+        width: min(300px, calc(100vw - 24px));
+    }
+
+    #board {
+        height: auto;
+    }
+
+    .sidebar {
+        width: min(300px, calc(100vw - 24px));
+    }
+}
+
+/* ---------- Meilleurs scores ---------- */
+.scores-sidebar {
+    width: 210px;
+}
+
+.scores-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: rang;
+    font-family: "Courier New", monospace;
+    font-size: 0.95rem;
+}
+
+.scores-list li {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    padding: 5px 4px;
+    border-radius: 6px;
+    counter-increment: rang;
+}
+
+.scores-list li::before {
+    content: counter(rang) ".";
+    width: 2.2em;
+    color: #64748b;
+    text-align: right;
+}
+
+.scores-list .ini {
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: #38bdf8;
+}
+
+.scores-list .pts {
+    margin-left: auto;
+    color: #facc15;
+}
+
+.scores-list li.moi {
+    background: #38bdf833;
+    outline: 1px solid #38bdf8;
+}
+
+.scores-list li.scores-empty {
+    color: #94a3b8;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.85rem;
+}
+
+.scores-list li.scores-empty::before {
+    content: none;
+}
+
+.record-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.record-form.hidden {
+    display: none;
+}
+
+.record-form input {
+    width: 4.2em;
+    padding: 6px;
+    border: 2px solid #38bdf8;
+    border-radius: 8px;
+    background: #0f172a;
+    color: #f8fafc;
+    font: bold 2rem "Courier New", monospace;
+    letter-spacing: 6px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.record-form button {
+    width: auto;
+    padding: 8px 18px;
+}
+
+.record-message {
+    min-height: 1.2em;
+    font-size: 0.85rem;
+    color: #fca5a5;
+}
+
+@media (max-width: 860px) {
+    .game {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
