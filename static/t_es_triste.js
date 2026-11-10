@@ -66,10 +66,16 @@ const overlay = document.getElementById("overlay");
 const overlayTitle = document.getElementById("overlay-title");
 const overlayText = document.getElementById("overlay-text");
 const restartButton = document.getElementById("restart");
+const scoresList = document.getElementById("scores-list");
+const recordForm = document.getElementById("record-form");
+const initialesInput = document.getElementById("initiales");
+const recordMessage = document.getElementById("record-message");
 
 let board;
 let player;
 let nextPiece;
+let holdPiece;
+let canHold;
 let bag;
 let score;
 let lines;
@@ -80,9 +86,12 @@ let dropCounter;
 let lastTime;
 let animationId;
 
-const TETRIS_POINTS = 800;
-const TSPIN_BONUS = TETRIS_POINTS * 2;
+const QUATRE_LIGNES_POINTS = 800;
+const TSPIN_BONUS = QUATRE_LIGNES_POINTS * 2;
 let lastWasRotation = false;
+
+const holdCanvas = document.getElementById("hold");
+const holdContext = holdCanvas.getContext("2d");
 
 function createBoard() {
     return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
@@ -229,6 +238,7 @@ function lockPiece() {
 
     clearLines();
     lastWasRotation = false;
+    canHold = true;
     spawnPiece();
 }
 
@@ -458,6 +468,7 @@ function drawNext() {
         row.forEach((value, x) => {
             if (value) {
                 drawPreviewBlock(
+                    nextContext,
                     offsetX + x * PREVIEW_BLOCK,
                     offsetY + y * PREVIEW_BLOCK,
                     COLORS[nextPiece.type]
@@ -467,16 +478,71 @@ function drawNext() {
     });
 }
 
-function drawPreviewBlock(x, y, color) {
-    nextContext.fillStyle = color;
-    nextContext.fillRect(x, y, PREVIEW_BLOCK, PREVIEW_BLOCK);
+function drawHold() {
+    holdContext.fillStyle = "#080c16";
+    holdContext.fillRect(0, 0, holdCanvas.width, holdCanvas.height);
 
-    nextContext.fillStyle = "rgba(255, 255, 255, 0.23)";
-    nextContext.fillRect(x + 2, y + 2, PREVIEW_BLOCK - 4, 4);
+    if (!holdPiece) {
+        return;
+    }
 
-    nextContext.strokeStyle = "rgba(0, 0, 0, 0.5)";
-    nextContext.lineWidth = 2;
-    nextContext.strokeRect(
+    const shape = copyShape(SHAPES[holdPiece]);
+    const width = shape[0].length * PREVIEW_BLOCK;
+    const height = shape.length * PREVIEW_BLOCK;
+    const offsetX = (holdCanvas.width - width) / 2;
+    const offsetY = (holdCanvas.height - height) / 2;
+
+    shape.forEach((row, y) => {
+        row.forEach((value, x) => {
+            if (value) {
+                drawPreviewBlock(
+                    holdContext,
+                    offsetX + x * PREVIEW_BLOCK,
+                    offsetY + y * PREVIEW_BLOCK,
+                    COLORS[holdPiece]
+                );
+            }
+        });
+    });
+}
+
+function holdPieceAction() {
+    if (paused || gameOver || !canHold) {
+        return;
+    }
+
+    const currentType = player.type;
+
+    if (holdPiece) {
+        player.type = holdPiece;
+        player.matrix = copyShape(SHAPES[holdPiece]);
+    } else {
+        player = nextPiece;
+        nextPiece = createPiece();
+        drawNext();
+    }
+
+    holdPiece = currentType;
+    canHold = false;
+    positionAtStart(player);
+
+    drawHold();
+
+    if (collision(player)) {
+        finishGame();
+    }
+}
+
+function drawPreviewBlock(ctx, x, y, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, PREVIEW_BLOCK, PREVIEW_BLOCK);
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.23)";
+    ctx.fillRect(x + 2, y + 2, PREVIEW_BLOCK - 4, 4);
+
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(
         x + 1,
         y + 1,
         PREVIEW_BLOCK - 2,
@@ -508,7 +574,7 @@ function togglePause() {
     paused = !paused;
 
     if (paused) {
-        showOverlay("Pause", "Appuie sur P pour continuer");
+        showOverlay("Pause", isTouch ? "Touchez pour continuer" : "Appuie sur P pour continuer");
     } else {
         hideOverlay();
         lastTime = performance.now();
@@ -517,8 +583,156 @@ function togglePause() {
 
 function finishGame() {
     gameOver = true;
-    showOverlay("Partie terminée", "Appuie sur R pour recommencer");
+    showOverlay("Partie terminée", isTouch ? "Touchez pour recommencer" : "Appuie sur R pour recommencer");
+    proposerRecord(score, lines, level);
 }
+
+/* ============================================================
+ * Meilleurs scores (fichier sur le serveur via scores.php)
+ * ============================================================ */
+
+const SCORES_URL = "scores"; // route Flask (app.py)
+let meilleursScores = [];
+let scoresMax = 10;
+let partieEnregistrable = null; // {score, lignes, niveau} en attente d'initiales
+
+function afficherScores(scores, idMoi) {
+    scoresList.textContent = "";
+    if (!scores.length) {
+        const vide = document.createElement("li");
+        vide.className = "scores-empty";
+        vide.textContent = "Aucun score pour l'instant : à toi de jouer !";
+        scoresList.appendChild(vide);
+        return;
+    }
+    scores.forEach(s => {
+        const li = document.createElement("li");
+        if (idMoi && s.id === idMoi) {
+            li.className = "moi";
+        }
+        li.title = s.lignes + " lignes, niveau " + s.niveau + " — " + s.date;
+        const ini = document.createElement("span");
+        ini.className = "ini";
+        ini.textContent = s.initiales;
+        const pts = document.createElement("span");
+        pts.className = "pts";
+        pts.textContent = s.score.toLocaleString("fr-FR");
+        li.append(ini, pts);
+        scoresList.appendChild(li);
+    });
+}
+
+function afficherScoresIndisponibles() {
+    scoresList.textContent = "";
+    const li = document.createElement("li");
+    li.className = "scores-empty";
+    li.textContent = "Scores indisponibles pour le moment.";
+    scoresList.appendChild(li);
+}
+
+function chargerScores() {
+    return fetch(SCORES_URL, { cache: "no-store" })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.ok) {
+                throw new Error(data.error || "erreur");
+            }
+            meilleursScores = data.scores;
+            scoresMax = data.max || scoresMax;
+            afficherScores(meilleursScores);
+            return true;
+        })
+        .catch(() => {
+            afficherScoresIndisponibles();
+            return false;
+        });
+}
+
+function entreDansLeClassement(points) {
+    if (points <= 0) {
+        return false;
+    }
+    if (meilleursScores.length < scoresMax) {
+        return true;
+    }
+    return points > meilleursScores[meilleursScores.length - 1].score;
+}
+
+function proposerRecord(points, nbLignes, niveau) {
+    chargerScores().then(ok => {
+        // La partie a pu être relancée pendant le chargement
+        if (!ok || !gameOver || !entreDansLeClassement(points)) {
+            return;
+        }
+        partieEnregistrable = { score: points, lignes: nbLignes, niveau: niveau };
+        overlayTitle.textContent = "Partie terminée";
+        overlayText.textContent = "Score : " + points.toLocaleString("fr-FR");
+        recordMessage.textContent = "";
+        try {
+            initialesInput.value = localStorage.getItem("t_es_triste_initiales") || "";
+        } catch (e) {
+            initialesInput.value = "";
+        }
+        recordForm.classList.remove("hidden");
+        initialesInput.focus();
+        initialesInput.select();
+    });
+}
+
+function cacherFormulaireRecord() {
+    partieEnregistrable = null;
+    recordForm.classList.add("hidden");
+    initialesInput.blur();
+}
+
+initialesInput.addEventListener("input", () => {
+    // Majuscules A-Z uniquement, 3 lettres maximum
+    initialesInput.value = initialesInput.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3);
+});
+
+recordForm.addEventListener("submit", event => {
+    event.preventDefault();
+    const initiales = initialesInput.value;
+    if (!/^[A-Z]{3}$/.test(initiales)) {
+        recordMessage.textContent = "Il faut 3 lettres (A à Z).";
+        initialesInput.focus();
+        return;
+    }
+    if (!partieEnregistrable) {
+        return;
+    }
+    const envoi = Object.assign({ initiales: initiales }, partieEnregistrable);
+    const bouton = recordForm.querySelector("button");
+    bouton.disabled = true;
+    recordMessage.textContent = "";
+    fetch(SCORES_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(envoi)
+    })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.ok) {
+                throw new Error(data.error || "Enregistrement impossible.");
+            }
+            try {
+                localStorage.setItem("t_es_triste_initiales", initiales);
+            } catch (e) {
+                // stockage local indisponible : sans importance
+            }
+            meilleursScores = data.scores;
+            afficherScores(meilleursScores, data.id);
+            cacherFormulaireRecord();
+            overlayTitle.textContent = data.rang ? "Bravo, n°" + data.rang + " !" : "Score enregistré";
+            overlayText.textContent = isTouch ? "Touchez pour recommencer" : "Appuie sur R pour recommencer";
+        })
+        .catch(err => {
+            recordMessage.textContent = err.message || "Enregistrement impossible.";
+        })
+        .finally(() => {
+            bouton.disabled = false;
+        });
+});
 
 function resetGame() {
     if (animationId) {
@@ -535,12 +749,16 @@ function resetGame() {
     dropCounter = 0;
     lastWasRotation = false;
     lastTime = performance.now();
+    holdPiece = null;
+    canHold = true;
 
     nextPiece = createPiece();
     spawnPiece();
 
+    cacherFormulaireRecord();
     updateStats();
     hideOverlay();
+    drawHold();
     draw();
 
     animationId = requestAnimationFrame(update);
@@ -563,6 +781,11 @@ function update(time = 0) {
 }
 
 document.addEventListener("keydown", event => {
+    // Pendant la saisie des initiales, les touches servent au texte, pas au jeu
+    if (event.target === initialesInput) {
+        return;
+    }
+
     const controlledKeys = [
         "ArrowLeft",
         "ArrowRight",
@@ -605,6 +828,10 @@ document.addEventListener("keydown", event => {
             hardDrop();
             break;
 
+        case "KeyC":
+            holdPieceAction();
+            break;
+
         case "KeyP":
             togglePause();
             break;
@@ -615,6 +842,145 @@ document.addEventListener("keydown", event => {
     }
 });
 
-restartButton.addEventListener("click", resetGame);
+restartButton.addEventListener("click", () => {
+    resetGame();
+    restartButton.blur(); // sinon Espace « clique » à nouveau sur le bouton
+});
+
+// ---------- Commandes tactiles ----------
+const isTouch = window.matchMedia("(pointer: coarse)").matches;
+
+function touchAction(action) {
+    if (action === "pause") {
+        if (gameOver) {
+            resetGame();
+        } else {
+            togglePause();
+        }
+        return;
+    }
+
+    if (paused || gameOver) {
+        return;
+    }
+
+    switch (action) {
+        case "left": movePlayer(-1); break;
+        case "right": movePlayer(1); break;
+        case "down": softDrop(); break;
+        case "rotate": rotatePlayer(1); break;
+        case "rotate-ccw": rotatePlayer(-1); break;
+        case "drop": hardDrop(); break;
+        case "hold": holdPieceAction(); break;
+    }
+}
+
+// Boutons : ◀ ▶ ▼ se répètent tant que le doigt reste appuyé
+const REPEATABLE = ["left", "right", "down"];
+
+document.querySelectorAll("#touchpad .tp").forEach(button => {
+    const action = button.dataset.action;
+    let delayTimer = null;
+    let repeatTimer = null;
+
+    const stop = () => {
+        clearTimeout(delayTimer);
+        clearInterval(repeatTimer);
+        button.classList.remove("active");
+    };
+
+    button.addEventListener("pointerdown", event => {
+        event.preventDefault();
+        button.classList.add("active");
+        touchAction(action);
+
+        if (REPEATABLE.includes(action)) {
+            delayTimer = setTimeout(() => {
+                repeatTimer = setInterval(() => touchAction(action), action === "down" ? 40 : 70);
+            }, 180);
+        }
+    });
+
+    ["pointerup", "pointercancel", "pointerleave"].forEach(type => button.addEventListener(type, stop));
+    button.addEventListener("contextmenu", event => event.preventDefault());
+});
+
+// Gestes sur la grille : toucher = rotation, glisser = déplacer / accélérer,
+// lancer vers le bas = chute directe, lancer vers le haut = réserve
+const boardContainer = document.getElementById("board-container");
+let gesture = null;
+
+boardContainer.addEventListener("touchstart", event => {
+    if (event.target.closest("#overlay")) {
+        return;
+    }
+
+    event.preventDefault();
+    const t = event.changedTouches[0];
+    gesture = { x: t.clientX, y: t.clientY, startX: t.clientX, startY: t.clientY, time: performance.now(), moved: false };
+}, { passive: false });
+
+boardContainer.addEventListener("touchmove", event => {
+    if (!gesture) {
+        return;
+    }
+
+    event.preventDefault();
+    const t = event.changedTouches[0];
+    const cell = canvas.getBoundingClientRect().width / COLS;
+
+    while (t.clientX - gesture.x >= cell) {
+        touchAction("right");
+        gesture.x += cell;
+        gesture.moved = true;
+    }
+
+    while (gesture.x - t.clientX >= cell) {
+        touchAction("left");
+        gesture.x -= cell;
+        gesture.moved = true;
+    }
+
+    while (t.clientY - gesture.y >= cell) {
+        touchAction("down");
+        gesture.y += cell;
+        gesture.moved = true;
+    }
+}, { passive: false });
+
+boardContainer.addEventListener("touchend", event => {
+    if (!gesture) {
+        return;
+    }
+
+    event.preventDefault();
+    const t = event.changedTouches[0];
+    const dx = t.clientX - gesture.startX;
+    const dy = t.clientY - gesture.startY;
+    const duration = performance.now() - gesture.time;
+    const speed = Math.abs(dy) / Math.max(duration, 1);   // px / ms
+
+    if (duration < 300 && speed > 0.6 && Math.abs(dy) > 2 * Math.abs(dx)) {
+        touchAction(dy > 0 ? "drop" : "hold");
+    } else if (!gesture.moved && Math.hypot(dx, dy) < 12) {
+        touchAction("rotate");
+    }
+
+    gesture = null;
+}, { passive: false });
+
+boardContainer.addEventListener("touchcancel", () => {
+    gesture = null;
+});
+
+// Toucher l'écran de pause / fin de partie
+// (sauf dans le formulaire des initiales : le toucher ne doit pas relancer la partie)
+overlay.addEventListener("click", event => {
+    if (event.target.closest("#record-form")) {
+        return;
+    }
+    touchAction("pause");
+});
 
 resetGame();
+chargerScores();

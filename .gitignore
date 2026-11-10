@@ -33,3 +33,6 @@ Thumbs.db
 
 # Version PHP : scores enregistrés en ligne (jamais versionnés)
 php/www/data/scores.json
+
+# Version Python : scores enregistrés en local (jamais versionnés)
+data/

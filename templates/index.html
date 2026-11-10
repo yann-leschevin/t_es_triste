@@ -4,34 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Tetris Flask</title>
+    <title>T_es_triste</title>
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <h1 class="game-title">T_ES_TRISTE</h1>
+
     <main class="game">
-        <section class="board-container">
-            <canvas id="board" width="300" height="600"></canvas>
-
-            <div id="overlay" class="overlay hidden">
-                <h2 id="overlay-title">Pause</h2>
-                <p id="overlay-text">Appuie sur P pour continuer</p>
-            </div>
-        </section>
-
-        <aside class="sidebar">
-            <h1>TETRIS</h1>
-
-            <section class="panel">
-                <h2>Pièce suivante</h2>
-                <canvas id="next" width="120" height="120"></canvas>
+        <aside class="sidebar sidebar-left">
+            <section class="panel panel-hold">
+                <h2>Réserve <span class="key-hint">(C)</span></h2>
+                <canvas id="hold" width="120" height="120"></canvas>
             </section>
 
             <section class="panel stats">
                 <p>Score <strong id="score">0</strong></p>
                 <p>Lignes <strong id="lines">0</strong></p>
                 <p>Niveau <strong id="level">1</strong></p>
+            </section>
+        </aside>
+
+        <section class="board-container" id="board-container">
+            <canvas id="board" width="300" height="600"></canvas>
+
+            <div id="overlay" class="overlay hidden">
+                <h2 id="overlay-title">Pause</h2>
+                <p id="overlay-text">Appuie sur P pour continuer</p>
+
+                <!-- Saisie des initiales quand le score entre dans le classement -->
+                <form id="record-form" class="record-form hidden" autocomplete="off">
+                    <label for="initiales">Nouveau record ! Tes initiales :</label>
+                    <input id="initiales" name="initiales" maxlength="3" required
+                           pattern="[A-Z]{3}" placeholder="AAA" spellcheck="false"
+                           autocapitalize="characters" inputmode="text">
+                    <button type="submit">Enregistrer</button>
+                    <p id="record-message" class="record-message" role="status"></p>
+                </form>
+            </div>
+        </section>
+
+        <aside class="sidebar">
+            <section class="panel panel-next">
+                <h2>Pièce suivante</h2>
+                <canvas id="next" width="120" height="120"></canvas>
             </section>
 
             <section class="panel controls">
@@ -41,15 +58,38 @@
                 <p>↑ / X : rotation</p>
                 <p>Z : rotation inverse</p>
                 <p>Espace : chute directe</p>
-                <p>T-Spin : 2 × tetris (1600/niveau)</p>
+                <p>C : réserver pièce</p>
+                <p>T-Spin : 2 × 4 lignes (1600/niveau)</p>
                 <p>P : pause</p>
                 <p>R : recommencer</p>
             </section>
 
             <button id="restart" type="button">Recommencer</button>
         </aside>
+
+        <aside class="sidebar scores-sidebar">
+            <section class="panel scores">
+                <h2>Meilleurs scores</h2>
+                <ol id="scores-list" class="scores-list">
+                    <li class="scores-empty">Chargement…</li>
+                </ol>
+            </section>
+        </aside>
+
+        <!-- Commandes tactiles (téléphone / tablette) : boutons + gestes sur la grille -->
+        <section class="touchpad" id="touchpad" aria-label="Commandes tactiles">
+            <button type="button" class="tp tp-small" data-action="hold" aria-label="Réserver la pièce">Réserve</button>
+            <button type="button" class="tp" data-action="rotate-ccw" aria-label="Rotation inverse">⟲</button>
+            <button type="button" class="tp tp-main" data-action="rotate" aria-label="Rotation">⟳</button>
+            <button type="button" class="tp tp-small" data-action="pause" aria-label="Pause">❚❚</button>
+            <button type="button" class="tp" data-action="left" aria-label="Gauche">◀</button>
+            <button type="button" class="tp" data-action="down" aria-label="Accélérer">▼</button>
+            <button type="button" class="tp" data-action="drop" aria-label="Chute directe">⤓</button>
+            <button type="button" class="tp" data-action="right" aria-label="Droite">▶</button>
+            <p class="tp-help">Sur la grille : touchez = rotation · glissez ← → = déplacer · glissez ↓ = accélérer · lancez ↓ = chute · lancez ↑ = réserve</p>
+        </section>
     </main>
 
-    <script src="{{ url_for('static', filename='tetris.js') }}"></script>
+    <script src="{{ url_for('static', filename='t_es_triste.js') }}"></script>
 </body>
 </html>
